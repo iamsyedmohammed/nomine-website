@@ -26,11 +26,13 @@ app.options('*', cors());
 
 app.use(express.json());
 
-// Handle Vercel URL rewrite headers so req.url reflects original path (/api/contact, /api/apply, etc.)
+// Handle URL routing for Vercel serverless rewrites
 app.use((req, res, next) => {
-  const matchedPath = req.headers['x-matched-path'];
-  if (matchedPath && matchedPath !== '/api/index.js') {
-    req.url = matchedPath;
+  if (req.url.startsWith('/api/index.js')) {
+    const matchedPath = req.headers['x-matched-path'];
+    if (matchedPath) {
+      req.url = matchedPath;
+    }
   }
   next();
 });
@@ -40,7 +42,15 @@ app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
 });
 
+app.get('/api', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
+});
+
 app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
+});
+
+app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
 });
 
