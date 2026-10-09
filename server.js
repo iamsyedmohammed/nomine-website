@@ -26,6 +26,15 @@ app.options('*', cors());
 
 app.use(express.json());
 
+// Debug Route
+app.get('/debug-vercel', (req, res) => {
+  res.status(200).json({
+    url: req.url,
+    originalUrl: req.originalUrl,
+    headers: req.headers
+  });
+});
+
 // Root & Health Check Endpoints
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });

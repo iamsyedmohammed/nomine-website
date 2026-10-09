@@ -1,17 +1,22 @@
 import app from '../server.js';
 
 export default (req, res) => {
-  // Restore original request URL before Express initializes originalUrl and routing
-  if (req.url.startsWith('/api/index.js')) {
-    const urlParam = req.url.includes('url=') ? decodeURIComponent(req.url.split('url=')[1]) : null;
-    if (urlParam) {
-      req.url = urlParam;
-    } else {
-      const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-path'];
-      if (matchedPath && matchedPath !== '/api/index.js') {
-        req.url = matchedPath;
-      }
-    }
+  if (req.url.includes('/debug-vercel')) {
+    return res.status(200).json({
+      url: req.url,
+      headers: req.headers,
+    });
   }
+
+  // Restore req.url from query param or header
+  const urlParam = req.url.includes('url=') ? decodeURIComponent(req.url.split('url=')[1].split('&')[0]) : null;
+  const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-path'];
+
+  if (urlParam) {
+    req.url = urlParam;
+  } else if (matchedPath && !matchedPath.includes('/api/index.js')) {
+    req.url = matchedPath;
+  }
+
   return app(req, res);
 };
