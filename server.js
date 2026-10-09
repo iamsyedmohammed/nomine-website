@@ -26,33 +26,24 @@ app.options('*', cors());
 
 app.use(express.json());
 
-// Debug Route
-app.get('/debug-vercel', (req, res) => {
-  res.status(200).json({
-    url: req.url,
-    originalUrl: req.originalUrl,
-    headers: req.headers
-  });
-});
-
-// Root & Health Check Endpoints
-app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
-});
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
-});
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
-});
-
 // API Routes
 app.use('/api', applicationRoutes);
 app.use('/api', contactRoutes);
 app.use(applicationRoutes);
 app.use(contactRoutes);
+
+// Root & Health Check Endpoints
+app.all('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
+});
+
+app.all('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
+});
+
+app.all('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
+});
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
