@@ -26,19 +26,6 @@ app.options('*', cors());
 
 app.use(express.json());
 
-// Restore original URL from Vercel rewrite query parameter or headers
-app.use((req, res, next) => {
-  if (req.query && req.query.url) {
-    req.url = req.query.url;
-  } else {
-    const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-path'];
-    if (matchedPath && matchedPath !== '/api/index.js') {
-      req.url = matchedPath;
-    }
-  }
-  next();
-});
-
 // Root & Health Check Endpoints
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
