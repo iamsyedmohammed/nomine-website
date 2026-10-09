@@ -28,11 +28,9 @@ app.use(express.json());
 
 // Handle URL routing for Vercel serverless rewrites
 app.use((req, res, next) => {
-  if (req.url.startsWith('/api/index.js')) {
-    const matchedPath = req.headers['x-matched-path'];
-    if (matchedPath) {
-      req.url = matchedPath;
-    }
+  const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-path'];
+  if (matchedPath) {
+    req.url = matchedPath;
   }
   next();
 });
