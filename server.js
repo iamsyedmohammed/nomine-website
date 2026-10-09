@@ -32,3 +32,5 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Nomine API Backend Server running on port ${PORT}`);
 });
+
+export default app;
