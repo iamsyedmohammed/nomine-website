@@ -4,7 +4,7 @@ import { submitContactForm } from '../controllers/contactController.js';
 
 const router = express.Router();
 
-// POST /api/contact - Handle contact inquiry submission with optional attachments
-router.post('/contact', upload.array('attachments', 5), submitContactForm);
+// POST /contact or /api/contact - Handle contact inquiry submission with optional attachments
+router.post(['/contact', '/api/contact'], upload.array('attachments', 5), submitContactForm);
 
 export default router;

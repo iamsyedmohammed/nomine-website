@@ -4,7 +4,7 @@ import { submitApplication } from '../controllers/applicationController.js';
 
 const router = express.Router();
 
-// POST /api/apply - Handle candidate application submission
-router.post('/apply', upload.single('resume'), submitApplication);
+// POST /apply or /api/apply - Handle candidate application submission
+router.post(['/apply', '/api/apply'], upload.single('resume'), submitApplication);
 
 export default router;

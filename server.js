@@ -35,12 +35,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// API Routes
-app.use('/api', applicationRoutes);
-app.use('/api', contactRoutes);
-app.use('/', applicationRoutes);
-app.use('/', contactRoutes);
-
 // Root & Health Check Endpoints
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
@@ -49,6 +43,12 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
 });
+
+// API Routes
+app.use('/api', applicationRoutes);
+app.use('/api', contactRoutes);
+app.use(applicationRoutes);
+app.use(contactRoutes);
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
