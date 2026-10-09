@@ -110,36 +110,27 @@ export const submitContactForm = async (req, res) => {
       html: candidateHtml
     };
 
-    // Send 200 OK immediately to frontend for instantaneous UI transition (< 200ms)
-    res.status(200).json({
+    console.log(`📤 [SMTP] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
+    console.log(`📤 [SMTP] Dispatching Confirmation Email to Client: ${email}...`);
+
+    const [adminResult, candidateResult] = await Promise.all([
+      transporter.sendMail(adminMailOptions),
+      transporter.sendMail(candidateMailOptions)
+    ]);
+
+    const durationMs = Date.now() - startTime;
+    const durationSec = (durationMs / 1000).toFixed(2);
+
+    console.log(`✅ [ADMIN INQUIRY SENT] Message ID: ${adminResult.messageId}`);
+    console.log(`✅ [CLIENT RECEIPT SENT] Message ID: ${candidateResult.messageId}`);
+    console.log(`🎉 Both project inquiry emails delivered successfully for ${fullName}`);
+    console.log(`⏱️ [PERFORMANCE] Total Email Delivery Time: ${durationMs}ms (${durationSec}s)`);
+    console.log(`======================================================\n`);
+
+    return res.status(200).json({
       success: true,
-      message: 'Inquiry submitted and confirmation emails queued successfully!'
+      message: 'Inquiry submitted and confirmation emails delivered successfully!'
     });
-
-    // Execute SMTP email transmission asynchronously in background
-    (async () => {
-      try {
-        console.log(`📤 [BACKGROUND TASK] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
-        console.log(`📤 [BACKGROUND TASK] Dispatching Confirmation Email to Client: ${email}...`);
-
-        const [adminResult, candidateResult] = await Promise.all([
-          transporter.sendMail(adminMailOptions),
-          transporter.sendMail(candidateMailOptions)
-        ]);
-
-        const durationMs = Date.now() - startTime;
-        const durationSec = (durationMs / 1000).toFixed(2);
-
-        console.log(`✅ [ADMIN INQUIRY SENT] Message ID: ${adminResult.messageId}`);
-        console.log(`✅ [CLIENT RECEIPT SENT] Message ID: ${candidateResult.messageId}`);
-        console.log(`🎉 Both project inquiry emails delivered successfully for ${fullName}`);
-        console.log(`⏱️ [PERFORMANCE] Total Background Email Delivery Time: ${durationMs}ms (${durationSec}s)`);
-        console.log(`======================================================\n`);
-      } catch (bgErr) {
-        const durationMs = Date.now() - startTime;
-        console.error(`❌ [BACKGROUND EMAIL DISPATCH ERROR] Email failed after ${durationMs}ms:`, bgErr.message);
-      }
-    })();
 
   } catch (error) {
     const durationMs = Date.now() - startTime;
