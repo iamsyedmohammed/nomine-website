@@ -24,13 +24,19 @@ app.use(express.json());
 app.use('/api', applicationRoutes);
 app.use('/api', contactRoutes);
 
-// Health Check Endpoint
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Nomine API Backend Server is running' });
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Nomine API Backend Server running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Nomine API Backend Server running on port ${PORT}`);
+  });
+}
 
 export default app;
