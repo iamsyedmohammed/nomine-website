@@ -48,8 +48,9 @@ export const submitContactForm = async (req, res) => {
     const fullName = `${firstName} ${lastName}`.trim();
     const formattedInterests = Array.isArray(interests) ? interests.join(', ') : (interests || 'General Inquiry');
 
+    const isUserScale = budget && (budget.toLowerCase().includes('user') || budget.toLowerCase().includes('endpoint'));
     const formattedBudget = budget && budget.trim() !== '' && budget !== 'Not Specified' 
-      ? (budget.startsWith('₹') ? budget : `₹${budget.replace(/^£/, '').trim()}`) 
+      ? (isUserScale ? budget.trim() : (budget.startsWith('₹') ? budget : `₹${budget.replace(/^£/, '').trim()}`)) 
       : 'Not Specified';
 
     const totalAttachmentSizeBytes = files.reduce((acc, f) => acc + (f.size || 0), 0);
