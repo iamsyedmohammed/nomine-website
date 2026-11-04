@@ -9,14 +9,17 @@ const getTransporter = () => {
     const senderPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
     const port = parseInt(process.env.SMTP_PORT || '465', 10);
     const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465;
+    const isOffice365 = (process.env.SMTP_HOST || '').includes('office365') || (process.env.SMTP_HOST || '').includes('outlook');
 
     cachedTransporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: port,
       secure: secure,
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
+      requireTLS: !secure,
+      tls: {
+        rejectUnauthorized: false
+      },
+      pool: !isOffice365,
       auth: {
         user: senderEmail,
         pass: senderPass
