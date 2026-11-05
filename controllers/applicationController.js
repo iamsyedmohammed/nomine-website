@@ -150,6 +150,10 @@ export const submitApplication = async (req, res) => {
       console.log(`✅ [CANDIDATE EMAIL SENT] Message ID: ${candidateResult.messageId}`);
       console.log(`🎉 Both application emails delivered successfully for ${fullName}`);
     }
+
+    const durationMs = Date.now() - startTime;
+    const durationSec = (durationMs / 1000).toFixed(2);
+
     console.log(`⏱️ [PERFORMANCE] Total Email Delivery Time: ${durationMs}ms (${durationSec}s)`);
     console.log(`======================================================\n`);
 

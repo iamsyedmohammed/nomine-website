@@ -158,6 +158,10 @@ export const submitContactForm = async (req, res) => {
       console.log(`✅ [CLIENT RECEIPT SENT] Message ID: ${candidateResult.messageId}`);
       console.log(`🎉 Both project inquiry emails delivered successfully for ${fullName}`);
     }
+
+    const durationMs = Date.now() - startTime;
+    const durationSec = (durationMs / 1000).toFixed(2);
+
     console.log(`⏱️ [PERFORMANCE] Total Email Delivery Time: ${durationMs}ms (${durationSec}s)`);
     console.log(`======================================================\n`);
 
