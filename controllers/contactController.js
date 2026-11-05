@@ -1,7 +1,15 @@
 import nodemailer from 'nodemailer';
 import { getAdminContactEmailTemplate, getCandidateContactEmailTemplate } from '../templates/contactEmailTemplates.js';
+import { sendGraphEmail } from '../services/graphEmailService.js';
 
 let cachedTransporter = null;
+
+const isGraphConfigured = () => {
+  return Boolean(
+    (process.env.MICROSOFT_CLIENT_ID || process.env.AZURE_CLIENT_ID) &&
+    (process.env.MICROSOFT_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET)
+  );
+};
 
 const getTransporter = () => {
   if (!cachedTransporter) {
@@ -70,8 +78,6 @@ export const submitContactForm = async (req, res) => {
     }
     console.log(`------------------------------------------------------`);
 
-    const transporter = getTransporter();
-
     // Generate HTML Email Content
     const adminHtml = getAdminContactEmailTemplate({
       firstName,
@@ -89,45 +95,66 @@ export const submitContactForm = async (req, res) => {
       budget: formattedBudget
     });
 
-    // Format file attachments for Nodemailer
+    // Format file attachments
     const mailAttachments = files.map((file) => ({
       filename: file.originalname,
       content: file.buffer,
       contentType: file.mimetype
     }));
 
-    // 1. Mail Options for Admin / Company
-    const adminMailOptions = {
-      from: `"Nomine Inquiries" <${senderEmail}>`,
-      to: receiverEmail,
-      replyTo: email,
-      subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
-      html: adminHtml,
-      attachments: mailAttachments
-    };
+    if (isGraphConfigured()) {
+      console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Client: ${email}...`);
 
-    // 2. Mail Options for Client / Candidate
-    const candidateMailOptions = {
-      from: `"Nomine Studio" <${senderEmail}>`,
-      to: email,
-      subject: `Project Inquiry Received - Nomine Studio`,
-      html: candidateHtml
-    };
+      await Promise.all([
+        sendGraphEmail({
+          to: receiverEmail,
+          replyTo: email,
+          subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
+          html: adminHtml,
+          attachments: mailAttachments
+        }),
+        sendGraphEmail({
+          to: email,
+          subject: `Project Inquiry Received - Nomine Studio`,
+          html: candidateHtml
+        })
+      ]);
 
-    console.log(`📤 [SMTP] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
-    console.log(`📤 [SMTP] Dispatching Confirmation Email to Client: ${email}...`);
+      console.log(`✅ [Microsoft Graph API] Both project inquiry emails delivered successfully for ${fullName}`);
+    } else {
+      const transporter = getTransporter();
 
-    const [adminResult, candidateResult] = await Promise.all([
-      transporter.sendMail(adminMailOptions),
-      transporter.sendMail(candidateMailOptions)
-    ]);
+      // 1. Mail Options for Admin / Company
+      const adminMailOptions = {
+        from: `"Nomine Inquiries" <${senderEmail}>`,
+        to: receiverEmail,
+        replyTo: email,
+        subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
+        html: adminHtml,
+        attachments: mailAttachments
+      };
 
-    const durationMs = Date.now() - startTime;
-    const durationSec = (durationMs / 1000).toFixed(2);
+      // 2. Mail Options for Client / Candidate
+      const candidateMailOptions = {
+        from: `"Nomine Studio" <${senderEmail}>`,
+        to: email,
+        subject: `Project Inquiry Received - Nomine Studio`,
+        html: candidateHtml
+      };
 
-    console.log(`✅ [ADMIN INQUIRY SENT] Message ID: ${adminResult.messageId}`);
-    console.log(`✅ [CLIENT RECEIPT SENT] Message ID: ${candidateResult.messageId}`);
-    console.log(`🎉 Both project inquiry emails delivered successfully for ${fullName}`);
+      console.log(`📤 [SMTP] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
+      console.log(`📤 [SMTP] Dispatching Confirmation Email to Client: ${email}...`);
+
+      const [adminResult, candidateResult] = await Promise.all([
+        transporter.sendMail(adminMailOptions),
+        transporter.sendMail(candidateMailOptions)
+      ]);
+
+      console.log(`✅ [ADMIN INQUIRY SENT] Message ID: ${adminResult.messageId}`);
+      console.log(`✅ [CLIENT RECEIPT SENT] Message ID: ${candidateResult.messageId}`);
+      console.log(`🎉 Both project inquiry emails delivered successfully for ${fullName}`);
+    }
     console.log(`⏱️ [PERFORMANCE] Total Email Delivery Time: ${durationMs}ms (${durationSec}s)`);
     console.log(`======================================================\n`);
 

@@ -1,7 +1,15 @@
 import nodemailer from 'nodemailer';
 import { getAdminEmailTemplate, getCandidateEmailTemplate } from '../templates/emailTemplates.js';
+import { sendGraphEmail } from '../services/graphEmailService.js';
 
 let cachedTransporter = null;
+
+const isGraphConfigured = () => {
+  return Boolean(
+    (process.env.MICROSOFT_CLIENT_ID || process.env.AZURE_CLIENT_ID) &&
+    (process.env.MICROSOFT_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET)
+  );
+};
 
 const getTransporter = () => {
   if (!cachedTransporter) {
@@ -57,8 +65,6 @@ export const submitApplication = async (req, res) => {
     console.log(`📎 Resume File: ${file.originalname} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
     console.log(`------------------------------------------------------`);
 
-    const transporter = getTransporter();
-
     // Generate HTML Email Templates
     const adminHtml = getAdminEmailTemplate({
       fullName,
@@ -76,44 +82,71 @@ export const submitApplication = async (req, res) => {
       fileName: file.originalname
     });
 
-    // 1. Admin Email Options
-    const adminMailOptions = {
-      from: `"Nomine Careers" <${senderEmail}>`,
-      to: receiverEmail,
-      replyTo: email,
-      subject: `[New Application] ${fullName} - ${position}`,
-      html: adminHtml,
-      attachments: [
-        {
-          filename: file.originalname,
-          content: file.buffer,
-          contentType: file.mimetype
-        }
-      ]
-    };
+    if (isGraphConfigured()) {
+      console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin: ${receiverEmail}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Candidate: ${email}...`);
 
-    // 2. Candidate Email Options
-    const candidateMailOptions = {
-      from: `"Nomine Careers" <${senderEmail}>`,
-      to: email,
-      subject: `Application Received: ${position} at Nomine`,
-      html: candidateHtml
-    };
+      await Promise.all([
+        sendGraphEmail({
+          to: receiverEmail,
+          replyTo: email,
+          subject: `[New Application] ${fullName} - ${position}`,
+          html: adminHtml,
+          attachments: [
+            {
+              filename: file.originalname,
+              content: file.buffer,
+              contentType: file.mimetype
+            }
+          ]
+        }),
+        sendGraphEmail({
+          to: email,
+          subject: `Application Received: ${position} at Nomine`,
+          html: candidateHtml
+        })
+      ]);
 
-    console.log(`📤 [SMTP] Dispatching Application Notification to Admin: ${receiverEmail}...`);
-    console.log(`📤 [SMTP] Dispatching Confirmation Email to Candidate: ${email}...`);
+      console.log(`✅ [Microsoft Graph API] Both application emails delivered successfully for ${fullName}`);
+    } else {
+      const transporter = getTransporter();
 
-    const [adminResult, candidateResult] = await Promise.all([
-      transporter.sendMail(adminMailOptions),
-      transporter.sendMail(candidateMailOptions)
-    ]);
+      // 1. Admin Email Options
+      const adminMailOptions = {
+        from: `"Nomine Careers" <${senderEmail}>`,
+        to: receiverEmail,
+        replyTo: email,
+        subject: `[New Application] ${fullName} - ${position}`,
+        html: adminHtml,
+        attachments: [
+          {
+            filename: file.originalname,
+            content: file.buffer,
+            contentType: file.mimetype
+          }
+        ]
+      };
 
-    const durationMs = Date.now() - startTime;
-    const durationSec = (durationMs / 1000).toFixed(2);
+      // 2. Candidate Email Options
+      const candidateMailOptions = {
+        from: `"Nomine Careers" <${senderEmail}>`,
+        to: email,
+        subject: `Application Received: ${position} at Nomine`,
+        html: candidateHtml
+      };
 
-    console.log(`✅ [ADMIN EMAIL SENT] Message ID: ${adminResult.messageId}`);
-    console.log(`✅ [CANDIDATE EMAIL SENT] Message ID: ${candidateResult.messageId}`);
-    console.log(`🎉 Both application emails delivered successfully for ${fullName}`);
+      console.log(`📤 [SMTP] Dispatching Application Notification to Admin: ${receiverEmail}...`);
+      console.log(`📤 [SMTP] Dispatching Confirmation Email to Candidate: ${email}...`);
+
+      const [adminResult, candidateResult] = await Promise.all([
+        transporter.sendMail(adminMailOptions),
+        transporter.sendMail(candidateMailOptions)
+      ]);
+
+      console.log(`✅ [ADMIN EMAIL SENT] Message ID: ${adminResult.messageId}`);
+      console.log(`✅ [CANDIDATE EMAIL SENT] Message ID: ${candidateResult.messageId}`);
+      console.log(`🎉 Both application emails delivered successfully for ${fullName}`);
+    }
     console.log(`⏱️ [PERFORMANCE] Total Email Delivery Time: ${durationMs}ms (${durationSec}s)`);
     console.log(`======================================================\n`);
 
