@@ -41,15 +41,17 @@ export const submitContactForm = async (req, res) => {
   const startTime = Date.now();
 
   try {
-    const { firstName, lastName, email, phone, interests, budget, message } = req.body;
+    const { fullName: rawFullName, firstName, lastName, email, phone, interests, budget, message } = req.body;
     const files = req.files || [];
 
+    const fullName = (rawFullName || `${firstName || ''} ${lastName || ''}`).trim();
+
     // Basic Validation
-    if (!firstName || !lastName || !email) {
+    if (!fullName || !email) {
       console.log('⚠️ [CONTACT FORM] Submission rejected: Missing name or email address.');
       return res.status(400).json({
         success: false,
-        message: 'First name, last name, and email address are required.'
+        message: 'Full name and email address are required.'
       });
     }
 
@@ -81,6 +83,7 @@ export const submitContactForm = async (req, res) => {
 
     // Generate HTML Email Content
     const adminHtml = getAdminContactEmailTemplate({
+      fullName,
       firstName,
       lastName,
       email,
@@ -92,7 +95,7 @@ export const submitContactForm = async (req, res) => {
     });
 
     const candidateHtml = getCandidateContactEmailTemplate({
-      firstName,
+      firstName: fullName.split(' ')[0] || fullName,
       interests: formattedInterests,
       budget: formattedBudget
     });
