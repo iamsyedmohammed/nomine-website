@@ -45,6 +45,19 @@ app.all('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'Nomine API Backend Server' });
 });
 
+// Multer & Global JSON Error Handler
+app.use((err, req, res, next) => {
+  if (err) {
+    console.error('⚠️ [SERVER ERROR HANDLER]:', err.message);
+    const statusCode = err.status || (err.name === 'MulterError' ? 400 : 500);
+    return res.status(statusCode).json({
+      success: false,
+      message: err.message || 'An error occurred while processing your request.'
+    });
+  }
+  next();
+});
+
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 Nomine API Backend Server running on port ${PORT}`);
