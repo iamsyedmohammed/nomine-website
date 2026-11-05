@@ -1,7 +1,7 @@
 /**
  * Generate HTML email template for Company Admin when a Contact / Project Inquiry is submitted
  */
-export const getAdminContactEmailTemplate = ({ firstName, lastName, email, interests, budget, message, files }) => {
+export const getAdminContactEmailTemplate = ({ firstName, lastName, email, phone, interests, budget, message, files }) => {
   const fullName = `${firstName} ${lastName}`.trim();
   const fileNamesList = files && files.length > 0 
     ? files.map(f => f.originalname).join(', ') 
@@ -12,7 +12,7 @@ export const getAdminContactEmailTemplate = ({ firstName, lastName, email, inter
   const budgetLabel = isScale ? 'Team Scale:' : 'Estimated Budget:';
   const displayBudget = cleanBudget && cleanBudget !== 'Not Specified' && !cleanBudget.includes('Not Specified')
     ? (isScale ? cleanBudget : (cleanBudget.startsWith('₹') ? cleanBudget : `₹${cleanBudget.replace(/^[₹£]/, '').trim()}`))
-    : 'Not Specified';
+    : '';
 
   return `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e6; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); box-sizing: border-box;">
@@ -37,14 +37,24 @@ export const getAdminContactEmailTemplate = ({ firstName, lastName, email, inter
                 <a href="mailto:${email}" style="color: #111115; text-decoration: underline; font-weight: 600; word-break: break-all; overflow-wrap: anywhere;">${email}</a>
               </td>
             </tr>
+            ${phone ? `
+            <tr>
+              <td style="padding: 9px 8px 9px 0; color: #777782; font-weight: 600; width: 35%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word;">Phone Number:</td>
+              <td style="padding: 9px 0; width: 65%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-all; overflow-wrap: anywhere;">
+                <a href="tel:${phone}" style="color: #111115; text-decoration: none; font-weight: 600;">${phone}</a>
+              </td>
+            </tr>
+            ` : ''}
             <tr>
               <td style="padding: 9px 8px 9px 0; color: #777782; font-weight: 600; width: 35%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word;">Services Needed:</td>
               <td style="padding: 9px 0; color: #CC0101; font-weight: 800; width: 65%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word; overflow-wrap: anywhere;">${interests}</td>
             </tr>
+            ${displayBudget ? `
             <tr>
               <td style="padding: 9px 8px 9px 0; color: #777782; font-weight: 600; width: 35%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word;">${budgetLabel}</td>
               <td style="padding: 9px 0; color: #111115; font-weight: 700; width: 65%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word; overflow-wrap: anywhere;">${displayBudget}</td>
             </tr>
+            ` : ''}
             <tr>
               <td style="padding: 9px 8px 9px 0; color: #777782; font-weight: 600; width: 35%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word;">Attached Files:</td>
               <td style="padding: 9px 0; color: #111115; font-weight: 600; width: 65%; vertical-align: top; border-bottom: 1px solid #f0f0f4; word-break: break-word; overflow-wrap: anywhere;">${fileNamesList}</td>

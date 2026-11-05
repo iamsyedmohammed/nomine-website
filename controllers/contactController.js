@@ -41,7 +41,7 @@ export const submitContactForm = async (req, res) => {
   const startTime = Date.now();
 
   try {
-    const { firstName, lastName, email, interests, budget, message } = req.body;
+    const { firstName, lastName, email, phone, interests, budget, message } = req.body;
     const files = req.files || [];
 
     // Basic Validation
@@ -70,8 +70,9 @@ export const submitContactForm = async (req, res) => {
     console.log(`\n======================================================`);
     console.log(`📩 [CONTACT FORM] New Project Inquiry Received!`);
     console.log(`👤 Client: ${fullName} <${email}>`);
+    if (phone) console.log(`📞 Phone: ${phone}`);
     console.log(`💡 Interested In: ${formattedInterests}`);
-    console.log(`💰 Budget: ${formattedBudget}`);
+    if (formattedBudget !== 'Not Specified') console.log(`💰 Budget: ${formattedBudget}`);
     console.log(`📁 Attachments Count: ${files.length} file(s) (${totalAttachmentMB} MB)`);
     if (files.length > 0) {
       console.log(`📎 Files: ${files.map(f => f.originalname).join(', ')}`);
@@ -83,6 +84,7 @@ export const submitContactForm = async (req, res) => {
       firstName,
       lastName,
       email,
+      phone: phone || '',
       interests: formattedInterests,
       budget: formattedBudget,
       message: message || '',
