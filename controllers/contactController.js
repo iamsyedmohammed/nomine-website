@@ -58,7 +58,6 @@ export const submitContactForm = async (req, res) => {
     const senderEmail = process.env.GRAPH_SENDER_EMAIL || process.env.EMAIL_USER || 'apply@thenomine.com';
     const adminNotificationEmail = process.env.RECEIVER_EMAIL || process.env.ADMIN_EMAIL || 'apply@thenomine.com';
 
-    const fullName = `${firstName} ${lastName}`.trim();
     const formattedInterests = Array.isArray(interests) ? interests.join(', ') : (interests || 'General Inquiry');
 
     const isUserScale = budget && (budget.toLowerCase().includes('user') || budget.toLowerCase().includes('endpoint'));
