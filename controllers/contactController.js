@@ -53,8 +53,8 @@ export const submitContactForm = async (req, res) => {
       });
     }
 
-    const senderEmail = process.env.EMAIL_USER || process.env.SMTP_USER;
-    const receiverEmail = process.env.RECEIVER_EMAIL || process.env.ADMIN_EMAIL || senderEmail;
+    const senderEmail = process.env.GRAPH_SENDER_EMAIL || process.env.EMAIL_USER || 'apply@thenomine.com';
+    const adminNotificationEmail = process.env.RECEIVER_EMAIL || process.env.ADMIN_EMAIL || 'apply@thenomine.com';
 
     const fullName = `${firstName} ${lastName}`.trim();
     const formattedInterests = Array.isArray(interests) ? interests.join(', ') : (interests || 'General Inquiry');
@@ -103,19 +103,22 @@ export const submitContactForm = async (req, res) => {
     }));
 
     if (isGraphConfigured()) {
-      console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin: ${adminNotificationEmail}...`);
       console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Client: ${email}...`);
 
       await Promise.all([
         sendGraphEmail({
-          to: receiverEmail,
+          senderEmail,
+          to: adminNotificationEmail,
           replyTo: email,
           subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
           html: adminHtml,
           attachments: mailAttachments
         }),
         sendGraphEmail({
+          senderEmail,
           to: email,
+          replyTo: senderEmail,
           subject: `Project Inquiry Received - Nomine Studio`,
           html: candidateHtml
         })
@@ -128,7 +131,7 @@ export const submitContactForm = async (req, res) => {
       // 1. Mail Options for Admin / Company
       const adminMailOptions = {
         from: `"Nomine Inquiries" <${senderEmail}>`,
-        to: receiverEmail,
+        to: adminNotificationEmail,
         replyTo: email,
         subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
         html: adminHtml,
@@ -143,7 +146,7 @@ export const submitContactForm = async (req, res) => {
         html: candidateHtml
       };
 
-      console.log(`📤 [SMTP] Dispatching Inquiry Alert to Admin: ${receiverEmail}...`);
+      console.log(`📤 [SMTP] Dispatching Inquiry Alert to Admin: ${adminNotificationEmail}...`);
       console.log(`📤 [SMTP] Dispatching Confirmation Email to Client: ${email}...`);
 
       const [adminResult, candidateResult] = await Promise.all([

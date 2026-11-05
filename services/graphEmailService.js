@@ -68,7 +68,7 @@ export const sendGraphEmail = async ({
   attachments = []
 }) => {
   const token = await getGraphAccessToken();
-  const sender = senderEmail || process.env.GRAPH_SENDER_EMAIL || process.env.EMAIL_USER || 'vijay@thenomine.com';
+  const sender = senderEmail || process.env.GRAPH_SENDER_EMAIL || process.env.EMAIL_USER || 'apply@thenomine.com';
 
   const recipientList = (Array.isArray(to) ? to : [to])
     .filter(Boolean)

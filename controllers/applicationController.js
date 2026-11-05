@@ -53,8 +53,8 @@ export const submitApplication = async (req, res) => {
       });
     }
 
-    const senderEmail = process.env.EMAIL_USER || process.env.SMTP_USER;
-    const receiverEmail = process.env.RECEIVER_EMAIL || process.env.ADMIN_EMAIL || senderEmail;
+    const senderEmail = process.env.GRAPH_SENDER_EMAIL || process.env.EMAIL_USER || 'apply@thenomine.com';
+    const adminNotificationEmail = process.env.RECEIVER_EMAIL || process.env.ADMIN_EMAIL || 'apply@thenomine.com';
 
     console.log(`\n======================================================`);
     console.log(`📩 [CAREERS FORM] New Job Application Received!`);
@@ -83,12 +83,13 @@ export const submitApplication = async (req, res) => {
     });
 
     if (isGraphConfigured()) {
-      console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin: ${receiverEmail}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin: ${adminNotificationEmail}...`);
       console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Candidate: ${email}...`);
 
       await Promise.all([
         sendGraphEmail({
-          to: receiverEmail,
+          senderEmail,
+          to: adminNotificationEmail,
           replyTo: email,
           subject: `[New Application] ${fullName} - ${position}`,
           html: adminHtml,
@@ -101,7 +102,9 @@ export const submitApplication = async (req, res) => {
           ]
         }),
         sendGraphEmail({
+          senderEmail,
           to: email,
+          replyTo: senderEmail,
           subject: `Application Received: ${position} at Nomine`,
           html: candidateHtml
         })
@@ -114,7 +117,7 @@ export const submitApplication = async (req, res) => {
       // 1. Admin Email Options
       const adminMailOptions = {
         from: `"Nomine Careers" <${senderEmail}>`,
-        to: receiverEmail,
+        to: adminNotificationEmail,
         replyTo: email,
         subject: `[New Application] ${fullName} - ${position}`,
         html: adminHtml,
@@ -135,7 +138,7 @@ export const submitApplication = async (req, res) => {
         html: candidateHtml
       };
 
-      console.log(`📤 [SMTP] Dispatching Application Notification to Admin: ${receiverEmail}...`);
+      console.log(`📤 [SMTP] Dispatching Application Notification to Admin: ${adminNotificationEmail}...`);
       console.log(`📤 [SMTP] Dispatching Confirmation Email to Candidate: ${email}...`);
 
       const [adminResult, candidateResult] = await Promise.all([
