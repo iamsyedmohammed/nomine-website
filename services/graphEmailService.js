@@ -130,7 +130,7 @@ export const sendGraphEmail = async ({
     },
     body: JSON.stringify({
       message,
-      saveToSentItems: false
+      saveToSentItems: true
     })
   });
 
