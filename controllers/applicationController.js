@@ -172,7 +172,7 @@ export const submitApplication = async (req, res) => {
     if (!res.headersSent) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to process application. Please check server logs.'
+        message: 'Failed to process application. Please try again or contact apply@thenomine.com.'
       });
     }
   }

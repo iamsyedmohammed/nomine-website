@@ -184,8 +184,7 @@ export const submitContactForm = async (req, res) => {
     if (!res.headersSent) {
       return res.status(500).json({
         success: false,
-        message: error.message || 'Failed to process project inquiry. Please check server logs.',
-        error: error.message
+        message: 'Failed to process project inquiry. Please try again or contact apply@thenomine.com.'
       });
     }
   }
