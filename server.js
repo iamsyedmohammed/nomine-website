@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import applicationRoutes from './routes/applicationRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
+import staffRoutes from './routes/staffRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,8 +30,10 @@ app.use(express.json());
 // API Routes
 app.use('/api', applicationRoutes);
 app.use('/api', contactRoutes);
+app.use('/api', staffRoutes);
 app.use(applicationRoutes);
 app.use(contactRoutes);
+app.use(staffRoutes);
 
 // Root & Health Check Endpoints
 app.all('/', (req, res) => {

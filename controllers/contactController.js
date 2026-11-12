@@ -144,24 +144,24 @@ export const submitContactForm = async (req, res) => {
 
     if (isGraphConfigured()) {
       try {
-        console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin: ${adminNotificationEmail}...`);
-        await sendGraphEmail({
-          senderEmail,
-          to: adminNotificationEmail,
-          replyTo: email,
-          subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
-          html: adminHtml,
-          attachments: mailAttachments
-        });
-
-        console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Client: ${email}...`);
-        await sendGraphEmail({
-          senderEmail,
-          to: email,
-          replyTo: senderEmail,
-          subject: `Project Inquiry Received - Nomine Studio`,
-          html: candidateHtml
-        });
+        console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin & Client in parallel...`);
+        await Promise.all([
+          sendGraphEmail({
+            senderEmail,
+            to: adminNotificationEmail,
+            replyTo: email,
+            subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
+            html: adminHtml,
+            attachments: mailAttachments
+          }),
+          sendGraphEmail({
+            senderEmail,
+            to: email,
+            replyTo: senderEmail,
+            subject: `Project Inquiry Received - Nomine Studio`,
+            html: candidateHtml
+          })
+        ]);
 
         delivered = true;
         console.log(`✅ [Microsoft Graph API] Both project inquiry emails delivered successfully for ${fullName}`);

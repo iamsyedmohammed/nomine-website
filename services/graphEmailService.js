@@ -122,17 +122,27 @@ export const sendGraphEmail = async ({
 
   const sendMailUrl = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sender)}/sendMail`;
 
-  const response = await fetch(sendMailUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      message,
-      saveToSentItems: true
-    })
-  });
+  // Use a 4-second timeout so a failing or unlicensed Exchange mailbox never blocks the user experience
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+  let response;
+  try {
+    response = await fetch(sendMailUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message,
+        saveToSentItems: false
+      }),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorBody = await response.text();
