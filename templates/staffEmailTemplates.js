@@ -116,28 +116,6 @@ export const getClientStaffEmailTemplate = ({
           A dedicated talent specialist will reach out within <strong>24 business hours</strong> to present curated specialist profiles, schedule technical alignment calls, and outline delivery options.
         </p>
 
-        <div style="background-color: #fafafc; border: 1px solid #ebebef; border-radius: 10px; padding: 18px 16px; margin-bottom: 20px; box-sizing: border-box;">
-          <h3 style="font-size: 14px; color: #111115; margin-top: 0; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Request Summary</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
-            <tr>
-              <td style="padding: 6px 0; color: #777782; width: 40%;">Specialization:</td>
-              <td style="padding: 6px 0; color: #111115; font-weight: 600; width: 60%;">${domain}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #777782; width: 40%;">Engagement Model:</td>
-              <td style="padding: 6px 0; color: #111115; font-weight: 600; width: 60%;">${model}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #777782; width: 40%;">Requested Team Size:</td>
-              <td style="padding: 6px 0; color: #111115; font-weight: 600; width: 60%;">${teamSize}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #777782; width: 40%;">Target Timeline:</td>
-              <td style="padding: 6px 0; color: #111115; font-weight: 600; width: 60%;">${timeline}</td>
-            </tr>
-          </table>
-        </div>
-
         <p style="color: #777782; font-size: 13px; line-height: 1.5; margin: 0;">
           Need immediate assistance? Feel free to reply directly to this email or reach us at <a href="mailto:apply@thenomine.com" style="color: #CC0101; text-decoration: none; font-weight: 600;">apply@thenomine.com</a>.
         </p>
