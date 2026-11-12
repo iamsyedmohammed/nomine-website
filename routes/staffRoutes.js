@@ -9,3 +9,4 @@ const router = express.Router();
 router.post(['/staff-augmentation', '/api/staff-augmentation'], upload.none(), submitStaffInquiry);
 
 export default router;
+
