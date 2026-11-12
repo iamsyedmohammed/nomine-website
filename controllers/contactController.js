@@ -106,35 +106,12 @@ export const submitContactForm = async (req, res) => {
       contentType: file.mimetype
     }));
 
-    if (isGraphConfigured()) {
-      console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin: ${adminNotificationEmail}...`);
-      console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Client: ${email}...`);
-
-      await Promise.all([
-        sendGraphEmail({
-          senderEmail,
-          to: adminNotificationEmail,
-          replyTo: email,
-          subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
-          html: adminHtml,
-          attachments: mailAttachments
-        }),
-        sendGraphEmail({
-          senderEmail,
-          to: email,
-          replyTo: senderEmail,
-          subject: `Project Inquiry Received - Nomine Studio`,
-          html: candidateHtml
-        })
-      ]);
-
-      console.log(`✅ [Microsoft Graph API] Both project inquiry emails delivered successfully for ${fullName}`);
-    } else {
+    const sendViaSmtp = async () => {
       const transporter = getTransporter();
+      const smtpSender = process.env.EMAIL_USER || process.env.SMTP_USER || senderEmail;
 
-      // 1. Mail Options for Admin / Company
       const adminMailOptions = {
-        from: `"Nomine Inquiries" <${senderEmail}>`,
+        from: `"Nomine Inquiries" <${smtpSender}>`,
         to: adminNotificationEmail,
         replyTo: email,
         subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
@@ -142,10 +119,10 @@ export const submitContactForm = async (req, res) => {
         attachments: mailAttachments
       };
 
-      // 2. Mail Options for Client / Candidate
       const candidateMailOptions = {
-        from: `"Nomine Studio" <${senderEmail}>`,
+        from: `"Nomine Studio" <${smtpSender}>`,
         to: email,
+        replyTo: smtpSender,
         subject: `Project Inquiry Received - Nomine Studio`,
         html: candidateHtml
       };
@@ -158,9 +135,43 @@ export const submitContactForm = async (req, res) => {
         transporter.sendMail(candidateMailOptions)
       ]);
 
-      console.log(`✅ [ADMIN INQUIRY SENT] Message ID: ${adminResult.messageId}`);
-      console.log(`✅ [CLIENT RECEIPT SENT] Message ID: ${candidateResult.messageId}`);
+      console.log(`✅ [ADMIN INQUIRY SENT via SMTP] Message ID: ${adminResult.messageId}`);
+      console.log(`✅ [CLIENT RECEIPT SENT via SMTP] Message ID: ${candidateResult.messageId}`);
       console.log(`🎉 Both project inquiry emails delivered successfully for ${fullName}`);
+    };
+
+    let delivered = false;
+
+    if (isGraphConfigured()) {
+      try {
+        console.log(`📤 [Microsoft Graph API] Dispatching Inquiry Alert to Admin: ${adminNotificationEmail}...`);
+        await sendGraphEmail({
+          senderEmail,
+          to: adminNotificationEmail,
+          replyTo: email,
+          subject: `[New Inquiry] ${fullName} - ${formattedInterests}`,
+          html: adminHtml,
+          attachments: mailAttachments
+        });
+
+        console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Client: ${email}...`);
+        await sendGraphEmail({
+          senderEmail,
+          to: email,
+          replyTo: senderEmail,
+          subject: `Project Inquiry Received - Nomine Studio`,
+          html: candidateHtml
+        });
+
+        delivered = true;
+        console.log(`✅ [Microsoft Graph API] Both project inquiry emails delivered successfully for ${fullName}`);
+      } catch (graphErr) {
+        console.warn(`⚠️ [Microsoft Graph failed: ${graphErr.message}] -> Engaging verified SMTP fallback...`);
+      }
+    }
+
+    if (!delivered) {
+      await sendViaSmtp();
     }
 
     const durationMs = Date.now() - startTime;
@@ -180,7 +191,8 @@ export const submitContactForm = async (req, res) => {
     if (!res.headersSent) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to process project inquiry. Please check server logs.'
+        message: error.message || 'Failed to process project inquiry. Please check server logs.',
+        error: error.message
       });
     }
   }

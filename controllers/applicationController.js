@@ -82,41 +82,12 @@ export const submitApplication = async (req, res) => {
       fileName: file.originalname
     });
 
-    if (isGraphConfigured()) {
-      console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin: ${adminNotificationEmail}...`);
-      console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Candidate: ${email}...`);
-
-      await Promise.all([
-        sendGraphEmail({
-          senderEmail,
-          to: adminNotificationEmail,
-          replyTo: email,
-          subject: `[New Application] ${fullName} - ${position}`,
-          html: adminHtml,
-          attachments: [
-            {
-              filename: file.originalname,
-              content: file.buffer,
-              contentType: file.mimetype
-            }
-          ]
-        }),
-        sendGraphEmail({
-          senderEmail,
-          to: email,
-          replyTo: senderEmail,
-          subject: `Application Received: ${position} at Nomine`,
-          html: candidateHtml
-        })
-      ]);
-
-      console.log(`✅ [Microsoft Graph API] Both application emails delivered successfully for ${fullName}`);
-    } else {
+    const sendViaSmtp = async () => {
       const transporter = getTransporter();
+      const smtpSender = process.env.EMAIL_USER || process.env.SMTP_USER || senderEmail;
 
-      // 1. Admin Email Options
       const adminMailOptions = {
-        from: `"Nomine Careers" <${senderEmail}>`,
+        from: `"Nomine Careers" <${smtpSender}>`,
         to: adminNotificationEmail,
         replyTo: email,
         subject: `[New Application] ${fullName} - ${position}`,
@@ -130,10 +101,10 @@ export const submitApplication = async (req, res) => {
         ]
       };
 
-      // 2. Candidate Email Options
       const candidateMailOptions = {
-        from: `"Nomine Careers" <${senderEmail}>`,
+        from: `"Nomine Careers" <${smtpSender}>`,
         to: email,
+        replyTo: smtpSender,
         subject: `Application Received: ${position} at Nomine`,
         html: candidateHtml
       };
@@ -146,9 +117,49 @@ export const submitApplication = async (req, res) => {
         transporter.sendMail(candidateMailOptions)
       ]);
 
-      console.log(`✅ [ADMIN EMAIL SENT] Message ID: ${adminResult.messageId}`);
-      console.log(`✅ [CANDIDATE EMAIL SENT] Message ID: ${candidateResult.messageId}`);
+      console.log(`✅ [ADMIN EMAIL SENT via SMTP] Message ID: ${adminResult.messageId}`);
+      console.log(`✅ [CANDIDATE EMAIL SENT via SMTP] Message ID: ${candidateResult.messageId}`);
       console.log(`🎉 Both application emails delivered successfully for ${fullName}`);
+    };
+
+    let delivered = false;
+
+    if (isGraphConfigured()) {
+      try {
+        console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin: ${adminNotificationEmail}...`);
+        await sendGraphEmail({
+          senderEmail,
+          to: adminNotificationEmail,
+          replyTo: email,
+          subject: `[New Application] ${fullName} - ${position}`,
+          html: adminHtml,
+          attachments: [
+            {
+              filename: file.originalname,
+              content: file.buffer,
+              contentType: file.mimetype
+            }
+          ]
+        });
+
+        console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Candidate: ${email}...`);
+        await sendGraphEmail({
+          senderEmail,
+          to: email,
+          replyTo: senderEmail,
+          subject: `Application Received: ${position} at Nomine`,
+          html: candidateHtml
+        });
+
+        delivered = true;
+        console.log(`✅ [Microsoft Graph API] Both application emails delivered successfully for ${fullName}`);
+      } catch (graphErr) {
+        console.warn(`⚠️ [Microsoft Graph failed: ${graphErr.message}] -> Engaging verified SMTP fallback...`);
+      }
+    }
+
+    if (!delivered) {
+      await sendViaSmtp();
     }
 
     const durationMs = Date.now() - startTime;
