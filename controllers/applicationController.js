@@ -122,43 +122,36 @@ export const submitApplication = async (req, res) => {
       console.log(`🎉 Both application emails delivered successfully for ${fullName}`);
     };
 
-    let delivered = false;
-
     if (isGraphConfigured()) {
-      try {
-        console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin & Candidate in parallel...`);
-        await Promise.all([
-          sendGraphEmail({
-            senderEmail,
-            to: adminNotificationEmail,
-            replyTo: email,
-            subject: `[New Application] ${fullName} - ${position}`,
-            html: adminHtml,
-            attachments: [
-              {
-                filename: file.originalname,
-                content: file.buffer,
-                contentType: file.mimetype
-              }
-            ]
-          }),
-          sendGraphEmail({
-            senderEmail,
-            to: email,
-            replyTo: senderEmail,
-            subject: `Application Received: ${position} at Nomine`,
-            html: candidateHtml
-          })
-        ]);
+      console.log(`📤 [Microsoft Graph API] Dispatching Application Notification to Admin: ${adminNotificationEmail}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Confirmation Email to Candidate: ${email}...`);
 
-        delivered = true;
-        console.log(`✅ [Microsoft Graph API] Both application emails delivered successfully for ${fullName}`);
-      } catch (graphErr) {
-        console.warn(`⚠️ [Microsoft Graph failed: ${graphErr.message}] -> Engaging verified SMTP fallback...`);
-      }
-    }
+      await Promise.all([
+        sendGraphEmail({
+          senderEmail,
+          to: adminNotificationEmail,
+          replyTo: email,
+          subject: `[New Application] ${fullName} - ${position}`,
+          html: adminHtml,
+          attachments: [
+            {
+              filename: file.originalname,
+              content: file.buffer,
+              contentType: file.mimetype
+            }
+          ]
+        }),
+        sendGraphEmail({
+          senderEmail,
+          to: email,
+          replyTo: senderEmail,
+          subject: `Application Received: ${position} at Nomine`,
+          html: candidateHtml
+        })
+      ]);
 
-    if (!delivered) {
+      console.log(`✅ [Microsoft Graph API] Both application emails delivered successfully for ${fullName}`);
+    } else {
       await sendViaSmtp();
     }
 

@@ -138,36 +138,28 @@ export const submitStaffInquiry = async (req, res) => {
     let delivered = false;
 
     if (isGraphConfigured()) {
-      try {
-        console.log(`📤 [Microsoft Graph] Dispatching Staff Request to Admin: ${adminNotificationEmail}...`);
-        console.log(`📤 [Microsoft Graph] Dispatching Confirmation to Client: ${email}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Staff Request to Admin: ${adminNotificationEmail}...`);
+      console.log(`📤 [Microsoft Graph API] Dispatching Confirmation to Client: ${email}...`);
 
-        // Send concurrently to avoid doubling the dispatch time
-        await Promise.all([
-          sendGraphEmail({
-            senderEmail,
-            to: adminNotificationEmail,
-            replyTo: email,
-            subject: `[Staff Request] ${company ? company + ' - ' : ''}${fullName} (${domain})`,
-            html: adminHtml
-          }),
-          sendGraphEmail({
-            senderEmail,
-            to: email,
-            replyTo: senderEmail,
-            subject: `Staff Augmentation Inquiry Received - Nomine`,
-            html: clientHtml
-          })
-        ]);
+      await Promise.all([
+        sendGraphEmail({
+          senderEmail,
+          to: adminNotificationEmail,
+          replyTo: email,
+          subject: `[Staff Request] ${company ? company + ' - ' : ''}${fullName} (${domain})`,
+          html: adminHtml
+        }),
+        sendGraphEmail({
+          senderEmail,
+          to: email,
+          replyTo: senderEmail,
+          subject: `Staff Augmentation Inquiry Received - Nomine`,
+          html: clientHtml
+        })
+      ]);
 
-        delivered = true;
-        console.log(`✅ [Microsoft Graph] Both staff inquiry emails delivered successfully for ${fullName}`);
-      } catch (graphErr) {
-        console.warn(`⚠️ [Microsoft Graph failed: ${graphErr.message}] -> Engaging SMTP fallback...`);
-      }
-    }
-
-    if (!delivered) {
+      console.log(`✅ [Microsoft Graph API] Both staff inquiry emails delivered successfully for ${fullName}`);
+    } else {
       await sendViaSmtp();
     }
 
